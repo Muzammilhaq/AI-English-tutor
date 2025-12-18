@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My AI English Tutor</title>
+    <style>
+        /* CSS: App ki Design (Style) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 { color: #4a4a4a; }
+        .box {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            min-height: 50px;
+            border: 1px solid #ddd;
+        }
+        #ai-text { font-weight: bold; color: #2d55ff; }
+        #user-text { font-style: italic; color: #333; }
+        button {
+            background-color: #ff4b2b;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover { background-color: #ff416c; }
+        button:active { transform: scale(0.95); }
+        .status { font-size: 12px; color: #888; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🗣️ AI English Tutor</h1>
+        
+        <p>AI Says:</p>
+        <div id="ai-text" class="box">Hi! I am your English teacher. Click 'Start Speaking' and introduce yourself.</div>
+
+        <p>You Said:</p>
+        <div id="user-text" class="box">...</div>
+
+        <button onclick="startListening()">🎙️ Start Speaking</button>
+        <div class="status" id="status-msg">Click button to talk...</div>
+    </div>
+
+    <script>
+        // JavaScript: App ka dimaag (Logic)
+        
+        // Browser support check
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const synthesis = window.speechSynthesis;
+
+        if (!SpeechRecognition) {
+            alert("Sorry, your browser doesn't support speech recognition. Please use Google Chrome on Desktop or Android.");
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US'; // English language set
+        
+        const aiDisplay = document.getElementById('ai-text');
+        const userDisplay = document.getElementById('user-text');
+        const statusMsg = document.getElementById('status-msg');
+
+        // Function: Jab user button dabaye
+        function startListening() {
+            recognition.start();
+            statusMsg.innerText = "Listening... Speak now!";
+        }
+
+        // Function: Jab AI user ki awaaz sun le
+        recognition.onresult = function(event) {
+            const userSpeech = event.results[0][0].transcript;
+            userDisplay.innerText = userSpeech;
+            statusMsg.innerText = "Processing...";
+            respondToUser(userSpeech);
+        };
+
+        // Function: AI ka jawab (Basic Logic)
+        function respondToUser(text) {
+            let response = "";
+            text = text.toLowerCase();
+
+            // AI Logic (Simple If/Else Conversation)
+            if (text.includes("hello") || text.includes("hi")) {
+                response = "Hello there! How are you feeling today?";
+            } 
+            else if (text.includes("fine") || text.includes("good")) {
+                response = "That is great to hear! What do you want to learn today?";
+            }
+            else if (text.includes("name")) {
+                response = "I am your AI English Assistant based on JavaScript.";
+            }
+            else if (text.includes("thank")) {
+                response = "You are welcome! Keep practicing.";
+            }
+            else {
+                response = "Interesting! Tell me more about that.";
+            }
+
+            aiDisplay.innerText = response;
+            speak(response);
+            statusMsg.innerText = "Click button to talk again...";
+        }
+
+        // Function: AI ko bolne ke liye
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1; // Speed
+            utterance.pitch = 1;
+            synthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
