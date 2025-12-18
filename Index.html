@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My AI English Tutor</title>
+    <title>AI English Tutor - Practice Mode</title>
     <style>
-        /* CSS: App ki Design (Style) */
+        /* CSS: App ki Design */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -19,121 +19,193 @@
         .container {
             background: white;
             padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             text-align: center;
         }
-        h1 { color: #4a4a4a; }
-        .box {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            min-height: 50px;
-            border: 1px solid #ddd;
+        h1 { color: #2a5298; margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        
+        .card {
+            background: #f0f4f8;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #2a5298;
+            text-align: left;
         }
-        #ai-text { font-weight: bold; color: #2d55ff; }
-        #user-text { font-style: italic; color: #333; }
+        .label { font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; }
+        .hindi-text { font-size: 22px; font-weight: bold; color: #d35400; margin: 10px 0; }
+        .english-text { font-size: 18px; color: #333; font-style: italic; min-height: 25px;}
+        
+        .result-box {
+            display: none; /* Pehle chhupa rahega */
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+        
         button {
-            background-color: #ff4b2b;
-            color: white;
             border: none;
             padding: 12px 25px;
             font-size: 16px;
             border-radius: 50px;
             cursor: pointer;
             transition: 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-weight: bold;
         }
-        button:hover { background-color: #ff416c; }
-        button:active { transform: scale(0.95); }
-        .status { font-size: 12px; color: #888; margin-top: 10px; }
+        .btn-mic { background-color: #ff4b2b; color: white; }
+        .btn-mic:hover { background-color: #ff416c; }
+        
+        .btn-next { background-color: #2a5298; color: white; display: none; } /* Pehle hide */
+        .btn-next:hover { background-color: #1e3c72; }
+
+        .status { font-size: 12px; color: #888; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🗣️ AI English Tutor</h1>
+        <h1>🎓 English Practice</h1>
+        <p>Translate the Hindi sentence to English</p>
         
-        <p>AI Says:</p>
-        <div id="ai-text" class="box">Hi! I am your English teacher. Click 'Start Speaking' and introduce yourself.</div>
+        <div class="card">
+            <div class="label">Translate this (Hindi):</div>
+            <div id="question-text" class="hindi-text">Loading...</div>
+            
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+            
+            <div class="label">You Said (English):</div>
+            <div id="user-text" class="english-text">...</div>
 
-        <p>You Said:</p>
-        <div id="user-text" class="box">...</div>
+            <div id="result-msg" class="result-box"></div>
+        </div>
 
-        <button onclick="startListening()">🎙️ Start Speaking</button>
-        <div class="status" id="status-msg">Click button to talk...</div>
+        <div class="btn-group">
+            <button class="btn-mic" onclick="startListening()">🎙️ Speak Answer</button>
+            <button id="next-btn" class="btn-next" onclick="loadNextQuestion()">Next Question ➡️</button>
+        </div>
+        
+        <div class="status" id="status-msg">Click 'Speak Answer' to start</div>
     </div>
 
     <script>
-        // JavaScript: App ka dimaag (Logic)
-        
-        // Browser support check
+        // --- 1. PRACTICE SET DATA (Aap yahan aur sentences add kar sakte hain) ---
+        const practiceSet = [
+            { hindi: "Mera naam Rahul hai.", english: "my name is rahul" },
+            { hindi: "Tum kaise ho?", english: "how are you" },
+            { hindi: "Main ja raha hoon.", english: "i am going" },
+            { hindi: "Mujhe bhookh lagi hai.", english: "i am hungry" },
+            { hindi: "Kya tum English bolte ho?", english: "do you speak english" },
+            { hindi: "Aaj mausam achha hai.", english: "the weather is good today" },
+            { hindi: "Mujhe der ho rahi hai.", english: "i am getting late" },
+            { hindi: "Phir milenge.", english: "see you again" },
+            { hindi: "Paani pilao.", english: "give me water" },
+            { hindi: "Yeh kitaab meri hai.", english: "this book is mine" }
+        ];
+
+        let currentQuestionIndex = 0;
+
+        // --- 2. SETUP ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const synthesis = window.speechSynthesis;
+        const synth = window.speechSynthesis;
 
+        const questionEl = document.getElementById('question-text');
+        const userEl = document.getElementById('user-text');
+        const resultEl = document.getElementById('result-msg');
+        const nextBtn = document.getElementById('next-btn');
+        const statusEl = document.getElementById('status-msg');
+
+        // Check browser support
         if (!SpeechRecognition) {
-            alert("Sorry, your browser doesn't support speech recognition. Please use Google Chrome on Desktop or Android.");
+            alert("Please use Google Chrome for this app.");
         }
-
         const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US'; // English language set
-        
-        const aiDisplay = document.getElementById('ai-text');
-        const userDisplay = document.getElementById('user-text');
-        const statusMsg = document.getElementById('status-msg');
+        recognition.lang = 'en-US';
 
-        // Function: Jab user button dabaye
-        function startListening() {
-            recognition.start();
-            statusMsg.innerText = "Listening... Speak now!";
-        }
-
-        // Function: Jab AI user ki awaaz sun le
-        recognition.onresult = function(event) {
-            const userSpeech = event.results[0][0].transcript;
-            userDisplay.innerText = userSpeech;
-            statusMsg.innerText = "Processing...";
-            respondToUser(userSpeech);
+        // Load first question on startup
+        window.onload = function() {
+            loadNextQuestion();
         };
 
-        // Function: AI ka jawab (Basic Logic)
-        function respondToUser(text) {
-            let response = "";
-            text = text.toLowerCase();
+        // --- 3. FUNCTIONS ---
 
-            // AI Logic (Simple If/Else Conversation)
-            if (text.includes("hello") || text.includes("hi")) {
-                response = "Hello there! How are you feeling today?";
-            } 
-            else if (text.includes("fine") || text.includes("good")) {
-                response = "That is great to hear! What do you want to learn today?";
-            }
-            else if (text.includes("name")) {
-                response = "I am your AI English Assistant based on JavaScript.";
-            }
-            else if (text.includes("thank")) {
-                response = "You are welcome! Keep practicing.";
-            }
-            else {
-                response = "Interesting! Tell me more about that.";
-            }
+        function loadNextQuestion() {
+            // Reset UI
+            userEl.innerText = "...";
+            resultEl.style.display = "none";
+            resultEl.className = "result-box";
+            nextBtn.style.display = "none";
+            statusEl.innerText = "Click 'Speak Answer' to answer";
 
-            aiDisplay.innerText = response;
-            speak(response);
-            statusMsg.innerText = "Click button to talk again...";
+            // Load Hindi Text
+            if (currentQuestionIndex >= practiceSet.length) {
+                currentQuestionIndex = 0; // Restart loop
+            }
+            questionEl.innerText = practiceSet[currentQuestionIndex].hindi;
+            
+            // AI Speaks the Hindi sentence (Optional, but helps)
+            // speak(practiceSet[currentQuestionIndex].hindi, 'hi-IN'); 
         }
 
-        // Function: AI ko bolne ke liye
-        function speak(text) {
+        function startListening() {
+            recognition.start();
+            statusEl.innerText = "Listening...";
+        }
+
+        recognition.onresult = function(event) {
+            const spokenText = event.results[0][0].transcript;
+            userEl.innerText = spokenText;
+            checkAnswer(spokenText);
+        };
+
+        function checkAnswer(userSpoken) {
+            const correctAnswer = practiceSet[currentQuestionIndex].english;
+            
+            // Basic comparison (Case insensitive & remove dots)
+            const cleanUser = userSpoken.toLowerCase().replace('.', '').trim();
+            const cleanCorrect = correctAnswer.toLowerCase().replace('.', '').trim();
+
+            resultEl.style.display = "block";
+
+            // Logic: Agar user ka jawab correct answer se milta hai
+            if (cleanUser === cleanCorrect) {
+                resultEl.innerText = "✅ Correct! Great job.";
+                resultEl.className = "result-box correct";
+                speak("Correct! Good job.", 'en-US');
+            } else {
+                // Grammar/Correction Check
+                resultEl.innerText = "❌ Incorrect. Correct English: " + correctAnswer;
+                resultEl.className = "result-box wrong";
+                speak("The correct answer is " + correctAnswer, 'en-US');
+            }
+
+            // Show Next Button
+            nextBtn.style.display = "block";
+            statusEl.innerText = "Click 'Next Question' to continue";
+            currentQuestionIndex++;
+        }
+
+        function speak(text, lang) {
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 1; // Speed
-            utterance.pitch = 1;
-            synthesis.speak(utterance);
+            utterance.lang = lang;
+            synth.speak(utterance);
         }
     </script>
 </body>
 </html>
+
+const practiceSet = [
+    { hindi: "Mera naam Rahul hai.", english: "my name is rahul" },
+    // Niche wali line copy-paste karke naya sawal jodein:
+    { hindi: "Aapka naya sawal hindi mein", english: "your new answer in english" },
+];
+
+
